@@ -54,8 +54,13 @@ object DBVendor extends ConnectionManager with Logger {
 				dbName = "jetreader"
             }
 
-            Full(DriverManager.getConnection( "jdbc:postgresql://" + dbHost + ":" + dbPort + "/" + dbName,
-                dbUser, dbPassword))
+            val dbUrl = System.getenv("JDBC_DATABASE_URL")
+
+            if(dbUrl != null)
+                Full(DriverManager.getConnection(dbUrl))
+            else
+                Full(DriverManager.getConnection( "jdbc:postgresql://" + dbHost + ":" + dbPort + "/" + dbName,
+                    dbUser, dbPassword))
         } catch {
             case e: Exception => {
                 e.printStackTrace

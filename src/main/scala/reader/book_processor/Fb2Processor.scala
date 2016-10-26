@@ -19,7 +19,7 @@ import javax.imageio.{ImageReader, ImageIO}
 class Fb2Processor extends Logger{
 
     protected val ImageSizeConstant = 1000
-    protected val linkPrefix = "intelgame"
+    protected val linkPrefix = "jetreader"
     protected val DefaultCssPrefix = "book"
     protected val SectionLevelToDivide = 2 // 0 - книга, 1 - часть, 2 - глава
 

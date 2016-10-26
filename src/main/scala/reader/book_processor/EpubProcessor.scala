@@ -34,7 +34,7 @@ class EpubProcessor extends Logger{
 
     // используются для генерации новых id
     protected var linkCounter: Int = 0
-    protected val linkPrefix = "intelgame"
+    protected val linkPrefix = "jetreader"
 
     protected def getNextLink = {
         linkCounter += 1
