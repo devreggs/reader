@@ -1,0 +1,95 @@
+<div id="main" class="lift:surround?with=internal;at=content">
+
+
+    <div class="lift:MyLib.bookFilter">
+        <a class="btn btn-default" id="show-filter-dialog">
+            <span class="current-filter"></span>
+            <span class="glyphicon glyphicon-filter"></span>
+        </a>
+
+        <a class="btn btn-default" id="clear-filter-dialog" href="/my-page">
+            Показать всё
+            <span class="glyphicon glyphicon-remove"></span>
+        </a>
+
+        <div id="filter-modal" style="display:none">
+            <span id="close-filter" class="pull-right glyphicon glyphicon-remove" style="cursor: pointer;"></span>
+            <br>
+
+            <div class="row">
+                <div class="col-xs-6" style="text-align: left">
+                    <h4>Авторы:</h4>
+                    <div class="author" style="margin-top: 0px; text-indent: -10pt; margin-left: 10pt">
+                        <a><span class="author-name"></span></a><br>
+                    </div>
+
+                </div>
+                <div class="col-xs-6" style="text-align: left">
+                    <h4>Жанры:</h4>
+                    <div class="genre" style="margin-top: 0px; text-indent: -10pt; margin-left: 10pt">
+                        <a><span class="genre-name"></span></a><br>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function filterDialog() {
+
+            $( "#filter-modal" ).dialog({
+                draggable: false,
+                show: true,
+                hide: true,
+                autoOpen: false,
+                modal: true,
+                zIndex: 500,
+                width: Math.max($(".container").width() / 2, 320),
+                position: { my: "center center", at: "center center", of: window },
+                open: function(){
+                    jQuery('.ui-widget-overlay').bind('click',function(){
+                        $("#filter-modal").dialog('close');
+                    });
+                    jQuery("#close-filter").bind('click',function(){
+                        jQuery("#filter-modal").dialog('close');
+                    });
+                    jQuery('.ui-widget-content').bind('click',function(){
+                    });
+                }
+            });
+            $("#filter-modal").dialog("open");
+            $(".ui-dialog-titlebar").hide();
+
+        }
+
+        $(document).ready(function() {
+            $("#show-filter-dialog").click(function(){
+                filterDialog();
+            });
+        })
+
+    </script>
+
+    <br>
+
+    <div class="container-fluid">
+        <div class="lift:MyLib.bookList" style="text-align: center">
+
+            <div class="book-block">
+                    <a class="book-block-link">
+                        <img class="book-block-image"/>
+                        <div class="book-block-caption">
+                            <span class="book-block-author"></span>
+                            <br>
+                            <span class="book-block-title"></span>
+                        </div>
+                    </a>
+                    <br>
+            </div>
+
+        </div>
+    </div>
+
+
+</div>

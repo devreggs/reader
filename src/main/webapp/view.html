@@ -1,0 +1,84 @@
+<div id="main" class="lift:surround?with=internal;at=content">
+
+    <div class="lift:MyLib.bookView">
+
+
+        <div class="row">
+            <div class="col-md-6 col-sm-6" style="text-align: center;">
+
+                <p class="h4 book-view-author" style="text-align: left"></p>
+                <p class="h3 book-view-title" style="text-align: left"></p>
+
+                    <div class="book-view-image-block">
+                        <a class="book-view-read-link">
+                            <img class="book-view-image"
+                                 style=""><br>
+                        </a>
+                    </div>
+
+                <p style="text-align: left; margin-top: 1.5em">Жанр: <span class="book-view-genre"></span></p>
+                <p style="text-align: left">Закладка: <span class="book-view-position"></span>%</p>
+                <p style="text-align: left">
+                    <a class="book-view-read-link" style="color: #1b71a0">
+                        <span class="glyphicon glyphicon-bookmark"></span> Читать
+                    </a>
+
+                    <br><br>
+
+                    <a href="#" data-toggle="modal" data-target="#remove-modal"
+                       style="color: #1b71a0; margin-left: 0px">
+                        <span class="glyphicon glyphicon-remove"></span> Удалить
+                    </a>
+                </p>
+
+
+                    <div style="float: left; ">
+
+
+
+                        <div id="admin-block" style="text-align: left">
+                            <input type="checkbox" id="toggle-state"/> Опубликовать<br>
+                            <span id="book-view-originalFilename"></span><br>
+                            <a id="book-view-download" href="">Скачать файл</a>
+                        </div>
+
+                    </div>
+
+                <div class="book-view-description" style="text-align: left; margin-top: 15px; clear:both"></div>
+
+            </div>
+
+            <div class="col-md-6 col-sm-6" style="">
+                <span class="book-view-contents" style="text-align: left; margin-top: 5px; padding-left: 30px;
+                border-left: 1px dotted rgba(161, 209, 255, 0.46)">
+                    <a href="#">Глава 1</a><br>
+                </span>
+            </div>
+
+            <div class="modal fade" id="remove-modal" tabindex="-1" role="dialog" aria-labelledby="contents-modal-label"
+                 aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                            <h4>Удалить книгу?</h4>
+                        </div>
+                        <div class="modal-body" id="remove-modal-body">
+                            <a class="btn btn-danger book-view-remove-link">Да</a>
+                            <a class="btn btn-default" data-dismiss="modal">Нет</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <span class="lift:MyLib.readBookParams"></span>
+
+    <script type="text/javascript">
+        $('a[goto-contents]').each(function(index) {
+            $(this).attr('href', '/paged-reader?id=' + bookId + '&link=' + $(this).attr('goto-contents'))
+        });
+    </script>
+</div>

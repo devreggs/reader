@@ -1,0 +1,209 @@
+/*Основное*/
+
+html,body {
+    height: 100%;
+    width: 100%;
+    padding: 0px;
+    margin: 0px;
+
+}
+
+.reader-internal-body {
+    font-family: 'Open Sans';
+    margin:0
+}
+
+.reader-internal-container {
+    margin: 0 auto;
+    padding: 0;
+    text-align: center;
+    font-family: 'Open Sans';
+    width: 100%;
+}
+
+#contents-modal-body {
+    text-align: left;
+    font-size: 12pt;
+}
+
+#contents-modal-body a{
+    margin-top: 40px;
+    color: black;
+}
+
+.book-region{
+    font-family: 'Open Sans';
+    font-size: 12pt;
+    width: 100%;
+}
+
+#page-content-left {
+    padding: 0px 30px 0 0;
+    margin: 0px;
+}
+
+#page-content-right {
+    margin: 0px;
+    padding: 0px 0 0 30px;
+}
+
+#page-content-center {
+    padding: 10px;
+}
+
+.top-line {
+    width: 100%;
+    border-top: 1px solid #888;
+}
+
+.direction-column {
+    text-align: center;
+    padding: 0;
+    margin: 0;
+    cursor: pointer;
+}
+
+#page-bottom{
+    border: 0px solid;
+}
+
+#bottom-panel {
+    z-index: 1;
+    position: absolute;
+    bottom: 0px;
+    left: 0px;
+    width: 100%;
+    background-color: #222222;
+    opacity: 0.75;
+    padding: 10px;
+    padding-top: 10px
+}
+
+#page-header a {
+    float: right;
+    margin-left: 25px;
+    color: #888;
+}
+
+
+/* Типография книги */
+
+.book-region div{
+    font-family: inherit;
+    font-size: inherit;
+}
+
+.book-region p{
+    font-family: inherit;
+    font-size: inherit;
+    text-indent: 20pt;
+    margin-top: 0px;
+    margin-bottom: 0px;
+}
+
+.book-region .split{
+    text-indent: 0em;
+}
+
+.book-region h1 {
+    font-family: inherit;
+    font-size: 150%;
+}
+.book-region h2 {
+    font-family: inherit;
+    font-size: 140%;
+}
+.book-region h3 {
+    font-family: inherit;
+    font-size: 130%;
+}
+.book-region h4 {
+    font-family: inherit;
+    font-size: 120%;
+}
+.book-region h5 {
+    font-family: inherit;
+    font-size: 110%;
+}
+.book-region h6 {
+    font-family: inherit;
+    font-size: 100%;
+    font-weigth: bold;
+}
+
+.book-region .book-title1 {
+    font-family: inherit;
+    font-size: 150%;
+    font-weigth: bold;
+    margin-bottom: 1em;
+}
+
+.book-region .book-title2 {
+    font-family: inherit;
+    font-size: 140%;
+    font-weigth: normal;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+.book-region .book-subtitle2 {
+    font-family: inherit;
+    font-size: 120%;
+    font-weigth: bold;
+    text-indent: 2em;
+    margin-top: 1em;
+}
+
+.book-region .book-section-title2 {
+    font-family: inherit;
+    font-size: 140%;
+    font-weight: 300;
+    line-height: 1.5;
+    text-indent: 20pt;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+.book-region .book-section-subtitle2 {
+    font-family: inherit;
+    font-size: 120%;
+    font-weigth: bold;
+    text-indent: 20pt;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+.book-region .book-section-subtitle3 {
+    font-family: inherit;
+    font-size: 100%;
+    font-weigth: bold;
+    text-indent: 20pt;
+    margin-top: 1em;
+    margin-bottom: 1em;
+}
+
+.book-region img {
+    max-width:100%;
+    max-height:100%;
+    margin: 3px auto;
+    display: block;
+}
+
+.book-region .book-epigraph {
+    font-style: italic;
+    font-size: 80%;
+    margin-left: 15pt;
+    margin-top: 15pt;
+    margin-bottom: 15pt;
+    margin-right: 0pt;
+    margin: 25px 0pt 15px 0pt;
+    padding: 0 0 0 30%;
+}
+
+.book-region .book-epigraph p{
+    margin: 1pt;
+}
+
+.book-region .book-epigraph-author {
+    text-align: right;
+}

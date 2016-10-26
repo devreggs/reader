@@ -1,0 +1,119 @@
+<div id="main" class="lift:surround?with=internal;at=content">
+
+    <script src="/js/jsrender.min.js" type="text/javascript"></script>
+
+    <ul class="nav nav-tabs">
+        <li class="active"><a href="#statistic" data-toggle="tab">Статистика</a></li>
+        <li><a href="#options" data-toggle="tab">Опции</a></li>
+        <li><a href="#users" data-toggle="tab">Пользователи</a></li>
+        <li><a href="#books" data-toggle="tab">Книги</a></li>
+        <li><a href="#genres" data-toggle="tab">Жанры</a></li>
+    </ul>
+
+    <div class="tab-content lift:Administration.environment"
+         style="padding-top: 25px;">
+
+        <div class="tab-pane active" id="statistic">
+            <div id="stat" style="text-align: left">
+                <span class="stat-values">
+                    <span class="stat-key" style="font-weight: bold"></span>:
+                    <span class="stat-value"></span>
+                    <br>
+                </span>
+            </div>
+        </div>
+
+        <div class="tab-pane" id="options">
+
+            <form class="form-horizontal" role="form">
+
+                <div class="form-group">
+                    <label for="default-path" class="col-sm-4 control-label">Хранилище</label>
+                    <div class="col-sm-4">
+                        <input type="text" class="form-control" id="default-path" name="defaultPath">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="demo-book-id-1" class="col-sm-4 control-label">Демо-книга 1</label>
+                    <div class="col-sm-4">
+                        <select class="form-control" id="demo-book-id-1" name="demoBookId1">
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="demo-book-id-2" class="col-sm-4 control-label">Демо-книга 2</label>
+                    <div class="col-sm-4">
+                        <select class="form-control" id="demo-book-id-2" name="demoBookId2">
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="demo-book-id-3" class="col-sm-4 control-label">Демо-книга 3</label>
+                    <div class="col-sm-4">
+                        <select class="form-control" id="demo-book-id-3" name="demoBookId3">
+                        </select>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="tab-pane" id="users">
+            <table class="table" id="users-list">
+                <tr>
+                    <th>E-mail</th>
+                    <th>Дата создания</th>
+                    <th>Администратор</th>
+                    <th>Последнее соединение</th>
+                </tr>
+                <tr class="user-element" style="text-align: left">
+                    <td class="user-email"></td>
+                    <td class="user-creation-date"></td>
+                    <td class="user-role"></td>
+                    <td class="user-last-connection"></td>
+                </tr>
+            </table>
+        </div>
+        <div class="tab-pane" id="books">
+
+            <button id="reprocess-all" class="btn btn-default">Переконвертировать все</button>
+            <button id="remove-all-failed" class="btn btn-default">Удалить все failed</button>
+            <button id="drop-author-titles" class="btn btn-default">Пересчитать имена</button>
+
+
+            <br>
+            <br>
+            <table class="table" id="books-list">
+                <tr>
+                    <th>Название</th>
+                    <th>Дата создания</th>
+                    <th>Владелец</th>
+                    <th>Состояние</th>
+                    <th></th>
+                    <th></th>
+                </tr>
+                <tr class="book-element" style="text-align: left">
+                    <td class="book-title"></td>
+                    <td class="book-creation-date"></td>
+                    <td class="book-owner"></td>
+                    <td class="book-state"></td>
+                    <td>
+                        <a class="book-view btn btn-default" href="#">
+                            <span class="glyphicon glyphicon-edit"></span>
+                        </a>
+                    </td>
+                </tr>
+            </table>
+        </div>
+        <div class="tab-pane" id="genres">
+            <table class="table" id="genre-list">
+                <tr class="genre-element" style="text-align: left">
+                    <td class="genre-source"></td>
+                    <td class="genre-title"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+</div>

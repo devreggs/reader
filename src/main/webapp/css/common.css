@@ -1,0 +1,222 @@
+body {
+    font-family: 'Open Sans';
+}
+
+.ui-dialog {
+    background: #fff;
+    padding: 5px;
+    border: 1px solid #ccc;
+}
+
+.ui-widget-overlay {
+    background: #000;
+    opacity: 0.7;
+}
+
+input[type=text]{
+    -webkit-appearance: none
+}
+
+input[type=password]{
+    -webkit-appearance: none
+}
+
+.container {
+    margin: 0 auto;
+    max-width: 1024px;
+    text-align: center;
+    font-family: 'Open Sans';
+}
+
+.simple-internal-container {
+    margin: 0 auto;
+    max-width: 1024px;
+    text-align: center;
+    font-family: 'Open Sans';
+}
+
+.book-view-contents a {
+    font-size: 100%;
+    color: #34495e;
+}
+
+.h3 {
+    font-family: 'Open Sans';
+    font-weight: 300;
+    line-height: 1.5;
+    font-size: 16pt;
+}
+
+.h4 {
+    font-family: 'Open Sans';
+    font-weight: 300;
+    line-height: 1.5;
+    font-size: 14pt;
+}
+
+h4 {
+    font-family: 'Open Sans';
+    font-weight: 300;
+    line-height: 1.5;
+    font-size: 14pt;
+}
+
+h3 {
+    font-family: 'Open Sans';
+    font-weight: 300;
+    line-height: 1.5;
+    font-size: 16pt;
+}
+
+h2 {
+    font-family: 'Open Sans';
+    font-weight: 300;
+    line-height: 1.5;
+    font-size: 18pt;
+}
+
+h1 {
+    font-family: 'Open Sans';
+    font-weight: 300;
+    line-height: 1.5;
+    font-size: 20pt;
+}
+
+.book-block-link:hover {
+    color: #888;
+}
+
+
+.stand {
+    margin: 0 auto;
+    text-align: center;
+    width: auto;
+    margin-top: 30px;
+}
+
+.ui-dialog {
+    z-index:9999
+}
+
+@media screen and (min-device-width:481px){
+    .book-block-image {
+        margin: 0 auto;
+        margin-left: 0px;
+        opacity: 0.9;
+        border: 1px solid #efefef
+    }
+
+    .book-block {
+        margin: 20px;
+        width: 150px;
+        padding: 0px;
+        text-align: center;
+        margin-bottom: 0px;
+        margin-top: 0px;
+        display: inline-block;
+        clear: left;
+        vertical-align: top;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .book-block-caption {
+        margin: 0 auto;
+        width: 150px;
+        z-index: 2;
+        font-weight: 300;
+        font-size: 10.5pt;
+        color: #888;
+        vertical-align: middle;
+        word-wrap: break-word;
+        height: 100px;
+        overflow: hidden
+    }
+
+    .book-block-upload {
+        width: 120px;
+        height: 180px;
+        background-image: url(/images/processing.png);
+        margin: 0 auto;
+        opacity: 0.6
+    }
+
+    .remove-book {
+        margin-top: 120px;
+        font-size: 18pt;
+        cursor: pointer
+    }
+
+    .book-block-load-image {
+        margin-top: 75px
+    }
+
+    .book-view-image {
+        margin: 0 auto;
+        opacity: 0.9;
+        float: left;
+    }
+
+    .book-view-image-block {
+        float: left;
+        margin-right: 20px;
+        margin-bottom: 20px
+    }
+}
+
+@media screen and (max-device-width:480px) {
+
+    .book-block {
+        margin: 0px;
+        padding: 10px;
+        width: 100%;
+        text-align: left;
+        vertical-align: middle;
+        display: block;
+        clear: left;
+    }
+
+    .book-block-image {
+        width: 60px;
+        height: 90px;
+        margin-right: 10px;
+        opacity: 0.9;
+        border: 1px solid #efefef;
+        float: left;
+    }
+
+    .book-block-caption {
+        font-weight: 300;
+        font-size: 10.5pt;
+        color: #888;
+        vertical-align: middle;
+    }
+
+    .book-block-upload {
+        width: 60px;
+        height: 90px;
+        background-image: url(images/processing.png);
+        margin: 0;
+        float: left;
+    }
+
+    .remove-book {
+        margin-top: 0px;
+        margin-left: 10px;
+        font-size: 18pt;
+        cursor: pointer
+    }
+
+    .book-view-image {
+        width: 90px;
+        margin: 0 auto;
+        opacity: 0.9;
+        float: left;
+    }
+
+    .book-view-image-block {
+        float: left;
+        margin-right: 10px;
+        margin-bottom: 10px
+    }
+}

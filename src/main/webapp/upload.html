@@ -1,0 +1,199 @@
+<div id="main" class="lift:surround?with=internal;at=content">
+
+    <link href="/css/jquery.fileupload.css" rel="stylesheet">
+
+    <span id="error-msg" style="font-size: 16pt"></span><br>
+
+    <span>Доступно: </span> <span id="freeStorageSize"></span> <span>Mb</span><br><br>
+
+    <span class="btn btn-default fileinput-button">
+        <span>С диска</span>
+        <input id="uploadBooks" type="file" name="files[]" data-url="upload/book"
+               data-sequential-uploads="true"
+               multiple="multiple">
+    </span>
+    <a class="btn btn-default" href="#"
+       data-toggle="modal" data-target="#url-modal">С Интернета</a>
+
+    <div class="control-group" style="margin: 0 auto; max-width: 400px; margin-top: 20px;">
+        <div id="uploadProgress" class="progress">
+            <div class="progress-bar" role="progressbar"
+                 aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%;"></div>
+        </div>
+    </div>
+
+    <span id="important-message" style="visibility: hidden">После обработки книги появятся на полке</span><br>
+
+    <ul class="list-group" id="files"
+        style="margin: 0 auto; margin-top: 20px; max-width: 400px">
+    </ul>
+
+
+    <div class="modal fade" id="url-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+                    <h4 class="modal-title">Ссылка на книгу</h4>
+                </div>
+                <div class="modal-body">
+                    <span class="text-danger" id="url-message"></span>
+                    <input type="text" class="form-control" name="url" id="url-text" style="width: 100%">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" id="load-url-button">Загрузить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="alert-modal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body">
+                    <b>Недостаточно места для загрузки файла</b>
+                    <br>
+                    <br>
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Ок</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/jquery.iframe-transport.js" type="text/javascript"></script>
+    <script src="/js/jquery.fileupload.js" type="text/javascript"></script>
+
+    <span class="lift:Upload.uploadParams"></span>
+
+    <script type="text/javascript">
+        var updateTimer;
+        function updateFreeSpace() {
+            $.ajaxSetup({async: true});
+            $.getJSON('/get-my-free-space', function(data, textStatus, jqXHR){
+                freeSpace = data.result;
+                var fss = Math.round(freeSpace / 1024 / 1024 * 10) / 10;
+                if(fss < 0) fss = 0;
+                $("#freeStorageSize").html(fss);
+                updateTimer = setTimeout(updateFreeSpace, 10000);
+            });
+        }
+
+        var freeSpace = freeStorageSize;
+        updateFreeSpace()
+
+        function showSpaceAlert() {
+            $('#alert-modal').modal('show')
+        }
+
+        $(function () {
+            $('#uploadBooks').fileupload({
+                dataType: 'json',
+                url: 'upload/book',
+                limitMultiFileUploadSize: freeSpace,
+                maxFileSize: freeSpace,
+                add: function (e, data) {
+                    var size = 0;
+                    $.each(data.files, function (index, file) {
+                        size = size + file.size;
+                    });
+                    if(size < freeSpace) {
+                        data.submit();
+                    } else {
+                        showSpaceAlert()
+                    }
+                },
+                done: function (e, data) {
+                    $.each(data.result.files, function (index, file) {
+                        if(file.error) {
+                            showSpaceAlert()
+                            updateFreeSpace()
+                        } else {
+                            /*$('<li class="list-group-item" style="border-radius: 0; background-color: #ecf0f1">'
+                                    + 'Файл ' + file.name + ' загружен'
+                                    + '<span class="glyphicon glyphicon-ok text-success" style="float: left; margin-left: 10px"><span>'
+                                    + '</li>').appendTo('#files');*/
+                            updateFreeSpace()
+                            $('#important-message').css('visibility', 'visible')
+                        }
+                    });
+
+                    $('#uploadProgress .progress-bar').css(
+                            'width',
+                            '100%'
+                    );
+                },
+                progressall: function (e, data) {
+                    var progress = parseInt(data.loaded / data.total * 100, 10);
+                    $('#uploadProgress .progress-bar').css(
+                            'width',
+                            progress + '%'
+                    );
+                }
+            });
+        });
+
+        $('#load-url-button').bind('click',function(){
+            var url = $('#url-text').val();
+            if(!validUrl(url)) url = 'http://' + url;
+            if(validUrl(url)) {
+                $.ajaxSetup({async: true});
+
+                $.post('/upload-url/book', {url: url}, function(data){
+                    if(data.result != '') {
+                        /*$('<li class="list-group-item" style="border-radius: 0; background-color: #ecf0f1">'
+                                + 'Ссылка с книгой ' + data.result + ' передана'
+                                + '<span class="glyphicon glyphicon-ok text-success" style="float: left; margin-left: 10px"><span>'
+                                + '</li>').appendTo('#files');*/
+                    }
+                }, "json");
+
+                $('#url-text').val('');
+                $('#url-modal').modal('hide');
+            } else {
+                $('#url-message').empty();
+                $('#url-message').html("Введите корректную ссылку");
+            }
+        });
+
+        $('#url-text').bind('keypress',function(){
+            $('#url-message').empty();
+        });
+
+        function validUrl(url) {
+            var urlregex = /^(ftp|http|https):\/\/(\w+:{0,1}\w*@)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%@!\-\/]))?$/
+            return urlregex.test(url);
+        }
+
+    </script>
+
+    <div class="container-fluid">
+
+        <div lift="comet?type=Processing" style="text-align: center">
+
+            <div class="book-block" style='-moz-user-select: none; -webkit-user-select: none; -ms-user-select:none; user-select:none;'>
+
+                <div class="book-block-upload">
+                    <span class="load-image"><img src="images/ajax-loader.gif" class="book-block-load-image"></span>
+                    <span class="remove-image">
+                        <a class="glyphicon glyphicon-remove text-error remove-book"></a>
+                        <br>
+                        <small class="text-error">удалить</small>
+                    </span>
+                </div>
+
+                <div class="book-block-caption">
+                    <small class="book-block-error-msg text-error"></small>
+                    <br>
+                    <span class="book-block-title"></span>
+                    <br>
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
