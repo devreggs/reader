@@ -39,6 +39,9 @@ object Environment {
     }
 
     def storageSize = {
-        FileUtils.sizeOfDirectory(new File(defaultPath.value.get))
+        val dirfile = new File(defaultPath.value.get)
+        if(dirfile.exists())
+            FileUtils.sizeOfDirectory(new File(defaultPath.value.get))
+        else "Хранилище не создано"
     }
 }

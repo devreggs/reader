@@ -21,7 +21,8 @@ class Registration {
         else if (password.get.length() < 6)
             S.error("message", "Пароль должен быть длиннее 6 символов")
         else {
-            val user = User.create.email(email).password(password).saveMe()
+
+            val user = User.create.email(email).password(password).role(if (User.count == 0) UserRole.admin else UserRole.reader).saveMe()
             reader.lib.Environment.demoBooks.foreach(BookLink.create.book(_).user(user).saveMe())
             User.logIn(user)
             //S.redirectTo("index")

@@ -40,21 +40,27 @@ object DBVendor extends ConnectionManager with Logger {
     def newConnection(name: ConnectionIdentifier) = {
 
         try {
+            // openshift support
             var dbHost = System.getenv("OPENSHIFT_POSTGRESQL_DB_HOST")
             var dbPort = System.getenv("OPENSHIFT_POSTGRESQL_DB_PORT")
             var dbUser = System.getenv("OPENSHIFT_POSTGRESQL_DB_USERNAME")
             var dbPassword = System.getenv("OPENSHIFT_POSTGRESQL_DB_PASSWORD")
-			var dbName = System.getenv("OPENSHIFT_APP_NAME")
+            var dbName = System.getenv("OPENSHIFT_APP_NAME")
 
+            // heroku support
+            var dbUrl = System.getenv("JDBC_DATABASE_URL")
+            // our own env for db url
+            if (dbUrl == null)
+                dbUrl = System.getProperty("JETREADER_DATABASE_URL")
+
+            // default values if neither OPENSHIFT_*, JDBC_DATABASE_URL nor JETREADER_DATABASE_URL set
             if(dbHost == null && dbPort == null && dbUser == null && dbPassword == null) {
                 dbHost = "localhost"
                 dbPort = "5432"
                 dbUser = "postgres"
                 dbPassword = "postgres"
-				dbName = "jetreader"
+                dbName = "jetreader"
             }
-
-            val dbUrl = System.getenv("JDBC_DATABASE_URL")
 
             if(dbUrl != null)
                 Full(DriverManager.getConnection(dbUrl))
