@@ -460,14 +460,7 @@ class EpubProcessor extends Logger{
     class EntityManager extends EntityResolver {
         def resolveEntity(publicId: String, systemId: String ): InputSource = {
             /* code goes here to return contents of DTD */
-            debug (publicId)
-            debug(systemId)
-            if (publicId.startsWith("-//W3C//ELEMENTS XHTML") || publicId.startsWith("-//W3C//ENTITIES"))
-                new InputSource(new FileInputStream("resources/" + systemId.substring(systemId.lastIndexOf("/") + 1)))
-            else if (publicId == "-//W3C//DTD XHTML 1.1//EN")
-                new InputSource(new FileInputStream("resources/xhtml11.dtd"))
-            else
-                new InputSource(systemId)
+            new InputSource(systemId)
         }
 
     }

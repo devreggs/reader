@@ -2,9 +2,11 @@ package reader.snippet
 
 
 import net.liftweb.util._
+import reader.lib.BookProcessor
 import reader.model._
 import Helpers._
-import net.liftweb.http.{RequestVar, S, SHtml}
+import java.io._
+import net.liftweb.http._
 import net.liftweb.http.provider.HTTPCookie
 
 class Registration {
@@ -21,8 +23,20 @@ class Registration {
         else if (password.get.length() < 6)
             S.error("message", "Пароль должен быть длиннее 6 символов")
         else {
-
-            val user = User.create.email(email).password(password).role(if (User.count == 0) UserRole.admin else UserRole.reader).saveMe()
+            var user = User.create.email(email).password(password).saveMe()
+            if (User.count == 1) {
+                user = user.role(UserRole.admin).saveMe()
+                //TODO: move books-from-resources processing here, for the very first user only and then use them as
+                //default demo books (set Environment)
+            }
+            val folder = new File(getClass.getResource("/demo-books").getPath)
+            if (folder.exists && folder.isDirectory)
+                folder.listFiles.toList.foreach(file => {
+                    println(file.getName)
+                    println(file.getAbsolutePath)
+                    BookProcessor.saveUploadedBook(new
+                        OnDiskFileParamHolder("files[]", "application/octet-stream", file.getName, file), user)
+                })
             reader.lib.Environment.demoBooks.foreach(BookLink.create.book(_).user(user).saveMe())
             User.logIn(user)
             //S.redirectTo("index")
