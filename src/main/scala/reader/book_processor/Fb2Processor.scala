@@ -1,19 +1,24 @@
 package reader.book_processor
 
 import java.io._
+import javax.xml.parsers.{DocumentBuilder, DocumentBuilderFactory}
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.sax.SAXResult
 import sun.misc.BASE64Decoder
 import net.liftweb.util._
 import Helpers._
 import scala.xml._
 import scala.collection.mutable.{ListBuffer, HashMap}
 import java.nio.file.{Paths, Files, Path}
-import java.nio.charset.Charset
+import java.nio.charset.{StandardCharsets, Charset}
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.JsonDSL._
 import scala.collection.mutable
 import net.liftweb.json
 import net.liftweb.common.{Logger, Box, Full, Empty}
 import javax.imageio.{ImageReader, ImageIO}
+
+import scala.xml.parsing.NoBindingFactoryAdapter
 
 
 class Fb2Processor extends Logger{
@@ -234,7 +239,11 @@ class Fb2Processor extends Logger{
                     new xml.Elem(null, "p", if (id.isEmpty) Null else Attribute(None, "id", Text(id.head.text), Null), TopScope, true, processBody(tagSeq.head.child, params) :_*)
                 }) &
                 "a" #> ((tagSeq: NodeSeq) => {
-                    val target = tagSeq.head.attribute("http://www.w3.org/1999/xlink", "href").head.text
+                    //val t = (tagSeq \ "@{http://www.w3.org/1999/xlink}href").he
+                    val target = (tagSeq \ "@{http://www.w3.org/1999/xlink}href").headOption.getOrElse(
+                        tagSeq.head.attribute("href").headOption.getOrElse(nse)
+                    ).text
+
                     if (target.startsWith("#")) {
                         linkCounter += 1
                         val myID = linkPrefix + linkCounter
@@ -387,9 +396,38 @@ class Fb2Processor extends Logger{
         }).flatten
     }
 
+    class EntityManager extends EntityResolver {
+        def resolveEntity(publicId: String, systemId: String ): InputSource = {
+            /* code goes here to return contents of DTD */
+            new InputSource(systemId)
+        }
+
+    }
+
+
+    def loadXML(filePath: String): Node = {
+        loadXML(new FileInputStream(new File(filePath)))
+    }
+
+    def loadXML(input: InputStream): Node = {
+        val factory: DocumentBuilderFactory  = DocumentBuilderFactory.newInstance()
+        factory.setNamespaceAware(true)
+        factory.setValidating(false)
+        val documentBuilder: DocumentBuilder  = factory.newDocumentBuilder()
+        documentBuilder.setEntityResolver(new EntityManager())
+
+        val source = new DOMSource(documentBuilder.parse(input))
+        val adapter = new NoBindingFactoryAdapter
+        val saxResult = new SAXResult(adapter)
+        val transformerFactory = javax.xml.transform.TransformerFactory.newInstance()
+        val transformer = transformerFactory.newTransformer()
+        transformer.transform(source, saxResult)
+        adapter.rootElem
+    }
+
     def convertToHtml(fullPath: String, outputFolder: String, pieMaxSize: Int, tipMaxSize: Int, srcPrefix: String, useExternalFixer: Boolean): Box[BookDescription] = {
         try {
-            val input = scala.xml.XML.loadFile(fullPath)
+            val input = loadXML(fullPath) //scala.xml.XML.loadFile(fullPath)
 
             val validated = if (useExternalFixer)
                 Fb2Fix(fullPath)
@@ -448,14 +486,16 @@ class Fb2Processor extends Logger{
 
                 // need to trim input xml otherwise every linebreak is loaded as a separate tag labeled "#PCDATA"
                 // with empty but non-zero length text which leads to output size counting errors
-                val html = xml.XML.loadString(processBody(xml.Utility.trim(input) \ "body", new procParams(binariesMap, 1, 0, null))
-                           .mkString.replace("  ", " ").replace(" .", ".").replace(" ,", ","))
+                val html = processBody((xml.Utility.trim(input) \ "body") /*.head.attributes.append((input \ "FictionBook").head.attributes)*/
+                    , new procParams(binariesMap, 1, 0, null))
+                val htmlNs = new xml.Elem(null, "div", html.head.attributes, input.scope, true, html.head.child :_*)
+                val htmlStr = htmlNs.mkString.replace("  ", " ").replace(" .", ".").replace(" ,", ",")
                 val htmlWriter = Files.newBufferedWriter(Paths.get(outputFolder + File.separator + "whole.html"), Charset.forName("UTF-8"))
-                htmlWriter.write(html.mkString)
+                htmlWriter.write(htmlStr)
                 htmlWriter.flush()
                 htmlWriter.close()
 
-                val htmlDivided = divideHtmlTree(html, 0, 0)
+                val htmlDivided = divideHtmlTree(loadXML(new ByteArrayInputStream(htmlStr.getBytes(StandardCharsets.UTF_8))), 0, 0)
                 // let's compute total html size including images and empty divs that can be added later
                 val htmlSize = htmlDivided.foldLeft[Double](0.0)((sum: Double, branch: Node) => sum + lengthOfBranch(branch) + (if (branch.length == 1) <div></div>.mkString.length else 0))
 

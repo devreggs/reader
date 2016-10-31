@@ -47,7 +47,7 @@ trait FilesMapper extends Logger with BaseKeyedMapper {
     }
 
     def readFile(filename: String) = {
-        val buffer = scala.io.Source.fromFile(filePath(filename))
+        val buffer = scala.io.Source.fromFile(filePath(filename))("UTF-8")
         val lines = buffer.getLines.reduceLeft(_ + _)
         buffer.close()
         lines
