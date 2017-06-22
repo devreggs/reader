@@ -3,27 +3,26 @@ package reader.book_processor
 /**
  * Created by IvanchukovaEV on 26.12.13.
  */
-class BookDescription (var title: String,
-                       var subtitles: List[String],
-                       var authors: List[AuthorName],
-                       var genres: List[String],
-                       var description: String,
-                       var coverpage: String,
-                       var keywords: List[String],
-                       var date: String,
-                       var language: String,
-                       var originalLanguage: String,
-                       var translators: List[AuthorName],
-                       var sequence: List[Sequence],
-                       var edition: String,
-                       var fullTitle: String,
-                       var id: String,
-                       var fb2version: String,
-                       var publisher: String,
-                       var publishTitle: String,
-                       var publishCity: String,
-                       var publishYear: String) {
-    def this() = this ("", List(), List(), List(), "", "", List(), "", "", "", List(), List(), "", "", "" ,"", "", "", "", "")
+class BookDescription (var title: String = "",
+                       var subtitles: List[String] = List(),
+                       var authors: List[AuthorName] = List(),
+                       var genres: List[String] = List(),
+                       var description: String = "",
+                       var coverpage: String = "",
+                       var keywords: List[String] = List(),
+                       var date: String = "",
+                       var language: String = "",
+                       var originalLanguage: String = "",
+                       var translators: List[AuthorName] = List(),
+                       var sequence: List[Sequence] = List(),
+                       var edition: String = "",
+                       var fullTitle: String = "",
+                       var id: String = "",
+                       var fb2version: String = "",
+                       var publisher: String = "",
+                       var publishTitle: String = "",
+                       var publishCity: String = "",
+                       var publishYear: String = "") {
 
     def mkString = {
         s"Title: $title\r\n${subtitles.mkString("\r\n")}" +
@@ -44,6 +43,33 @@ class BookDescription (var title: String,
             s"ID: $id\r\n" +
             s"Version: $fb2version\r\n"
     }
+
+    override def toString = mkString
+
+    override def equals(other: Any) = {
+        if (other.getClass != this.getClass)
+            false
+        else {
+            val o = other.asInstanceOf[this.type]
+            title == o.title &&
+            authors == o.authors &&
+            language == o.language &&
+            date == o.date &&
+            genres == o.genres &&
+            description == o.description &&
+            coverpage == o.coverpage &&
+            sequence == o.sequence &&
+            originalLanguage == o.originalLanguage &&
+            translators == o.translators &&
+            publisher == o.publisher &&
+            publishTitle == o.publishTitle &&
+            publishCity == o.publishCity &&
+            publishYear == o.publishYear &&
+            keywords == o.keywords &&
+            id == o.id &&
+            fb2version == o.fb2version
+        }
+    }
 }
 
 class AuthorName (val firstName: String,
@@ -53,7 +79,19 @@ class AuthorName (val firstName: String,
                      val email: String = "") {
 
     def mkString = {
-        s"$firstName $middleName $lastName $nickname, e-mail: $email"
+        s"fn:$firstName mn:$middleName ln:$lastName '$nickname', e-mail: $email"
+    }
+
+    override def toString = mkString
+
+    override def equals(other: Any) = {
+        if (other.getClass != this.getClass)
+            false
+        else {
+            val o = other.asInstanceOf[this.type]
+            firstName == o.firstName && middleName == o.middleName && lastName == o.lastName &&
+            nickname == o.nickname && email == o.email
+        }
     }
 }
 

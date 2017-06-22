@@ -166,7 +166,11 @@ class EpubProcessor extends Logger{
             // сортируем всех авторов в списке по значению display-seq (либо в порядке появления)
             result.authors = aut.sortWith(comparePairsByKey).map( _._2 ).toList
 
-            result.description = (description \ "description").text
+            result.description = try {
+                XML.loadString((description \ "description").text.replace("<br>", System.getProperty("line.separator"))).text
+            } catch {
+                case _: Throwable => (description \ "description").text
+            }
             result.date = (description \ "date").text
             result.publisher = (description \ "publisher").text
 
@@ -338,17 +342,10 @@ class EpubProcessor extends Logger{
                 else if (anchorsMap.contains(href)) {
                     <a href="#" goto={anchorsMap(href)}>{processBody(tagSeq.head.child, params)}</a> % tagSeq.head.attributes.filter{case f => f.key != "href"}.append({
                         if (id.isEmpty) {
-                            //val newId = getNextLink
-                            if (tagSeq.text == "[2]")
-                                debug ("id added1 " + getNextLink)
-
                             // добавить в карту ссылок нечего, ибо не было здесь id, а значит, не было и возможности придти сюда по ссылке
                             //anchorsMap = anchorsMap + ((filename + "#" + anchor, getLastLink))
-                            Attribute("id", Text(getLastLink), Null)
+                            Attribute("id", Text(getNextLink), Null)
                         } else {
-                            if (tagSeq.text == "[2]")
-                                debug ("i've seen you before1")
-
                             Null
                         }
                     })
@@ -369,16 +366,12 @@ class EpubProcessor extends Logger{
         def transformChain: NodeSeq => NodeSeq = {
             "*" #> ((tagSeq: NodeSeq) => {
                 // у всех элементов, имеющих "родной" id, надо проставить наш фирменный id
-                if (tagSeq.text == "[2]")
-                    debug ("replaceIdsAndAnchors *")
                 val id = (tagSeq.head \ "@id").text
                 val attributes = tagSeq.head.attributes.filter{ case f => f.key != "id"
                 }.append(
                     if (id.nonEmpty && !id.startsWith(linkPrefix)) {
                         // добавляем в карту ссылок
                         anchorsMap = anchorsMap + ((filename + "#" + id, getNextLink))
-                        if (tagSeq.text == "[2]")
-                            debug ("id replaced " + getLastLink)
                         Attribute("id", Text(getLastLink), Null)
                     } else
                         Null

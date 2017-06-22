@@ -13,6 +13,7 @@
     <properties>
         <lift.version>2.5</lift.version>
         <scala.version>2.10.2</scala.version>
+        <scala.compat.version>2.10</scala.compat.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>${project.build.sourceEncoding}</project.reporting.outputEncoding>
     </properties>
@@ -38,18 +39,24 @@
             <name>The Central Repository Browser</name>
             <url>http://search.maven.org/</url>
         </repository>
+        <repository>
+            <id>mvn</id>
+            <name>MVN Repository</name>
+            <url>https://mvnrepository.com</url>
+        </repository>
     </repositories>
+
 
     <dependencies>
         <dependency>
             <groupId>net.liftweb</groupId>
-            <artifactId>lift-mapper_2.10</artifactId>
+            <artifactId>lift-mapper_${scala.compat.version}</artifactId>
             <version>${lift.version}</version>
         </dependency>
 
         <dependency>
             <groupId>net.liftmodules</groupId>
-            <artifactId>lift-jquery-module_2.5_2.10</artifactId>
+            <artifactId>lift-jquery-module_2.5_${scala.compat.version}</artifactId>
             <version>2.8</version>
         </dependency>
         <dependency>
@@ -91,8 +98,13 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
+            <groupId>org.scalaz.stream</groupId>
+            <artifactId>scalaz-stream_${scala.compat.version}</artifactId>
+            <version>0.7.3</version>
+        </dependency>
+        <dependency>
             <groupId>org.specs2</groupId>
-            <artifactId>specs2_2.10</artifactId>
+            <artifactId>specs2_${scala.compat.version}</artifactId>
             <version>2.2.3</version>
             <scope>compile</scope>
         </dependency>
@@ -177,17 +189,18 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>2.4.3</version>
-                <configuration>
-                    <useSystemClassLoader>false</useSystemClassLoader>
-                    <argLine>-Xmx1024m</argLine>
-                    <includes>
-                        <include>**/*Unit.java</include>
-                        <include>**/*Spec.java</include>
-                    </includes>
-                </configuration>
+                <groupId>com.mmakowski</groupId>
+                <artifactId>maven-specs2-plugin</artifactId>
+                <version>0.4.2</version>
+                <executions>
+                    <execution>
+                        <id>verify</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>run-specs</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

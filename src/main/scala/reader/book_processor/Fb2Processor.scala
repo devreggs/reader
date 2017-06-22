@@ -238,10 +238,7 @@ class Fb2Processor extends Logger{
                     new xml.Elem(null, "p", if (id.isEmpty) Null else Attribute(None, "id", Text(id.head.text), Null), TopScope, true, processBody(tagSeq.head.child, params) :_*)
                 }) &
                 "a" #> ((tagSeq: NodeSeq) => {
-                    //val t = (tagSeq \ "@{http://www.w3.org/1999/xlink}href").he
-                    val target = (tagSeq \ "@{http://www.w3.org/1999/xlink}href").headOption.getOrElse(
-                        tagSeq.head.attribute("href").headOption.getOrElse(nse)
-                    ).text
+                    val target = tagSeq.head.attribute("http://www.w3.org/1999/xlink", "href").head.text
 
                     if (target.startsWith("#")) {
                         linkCounter += 1
@@ -396,29 +393,9 @@ class Fb2Processor extends Logger{
     }
 
 
-    def loadXML(filePath: String): Node = {
-        loadXML(new FileInputStream(new File(filePath)))
-    }
-
-    def loadXML(input: InputStream): Node = {
-        val factory: DocumentBuilderFactory  = DocumentBuilderFactory.newInstance()
-        factory.setNamespaceAware(true)
-        factory.setValidating(false)
-        val documentBuilder: DocumentBuilder  = factory.newDocumentBuilder()
-        documentBuilder.setEntityResolver(new EntityManager())
-
-        val source = new DOMSource(documentBuilder.parse(input))
-        val adapter = new NoBindingFactoryAdapter
-        val saxResult = new SAXResult(adapter)
-        val transformerFactory = javax.xml.transform.TransformerFactory.newInstance()
-        val transformer = transformerFactory.newTransformer()
-        transformer.transform(source, saxResult)
-        adapter.rootElem
-    }
-
     def convertToHtml(fullPath: String, outputFolder: String, pieMaxSize: Int, tipMaxSize: Int, srcPrefix: String, useExternalFixer: Boolean): Box[BookDescription] = {
         try {
-            val input = loadXML(fullPath) //scala.xml.XML.loadFile(fullPath)
+            val input = scala.xml.XML.loadFile(fullPath)
 
             val validated = if (useExternalFixer)
                 Fb2Fix(fullPath)
@@ -477,16 +454,14 @@ class Fb2Processor extends Logger{
 
                 // need to trim input xml otherwise every linebreak is loaded as a separate tag labeled "#PCDATA"
                 // with empty but non-zero length text which leads to output size counting errors
-                val html = processBody((xml.Utility.trim(input) \ "body") /*.head.attributes.append((input \ "FictionBook").head.attributes)*/
-                    , new procParams(binariesMap, 1, 0, null))
-                val htmlNs = new xml.Elem(null, "div", html.head.attributes, input.scope, true, html.head.child :_*)
-                val htmlStr = htmlNs.mkString.replace("  ", " ").replace(" .", ".").replace(" ,", ",")
+                val html = xml.XML.loadString(processBody(xml.Utility.trim(input) \ "body", new procParams(binariesMap, 1, 0, null))
+                    .mkString.replace("  ", " ").replace(" .", ".").replace(" ,", ","))
                 val htmlWriter = Files.newBufferedWriter(Paths.get(outputFolder + File.separator + "whole.html"), Charset.forName("UTF-8"))
-                htmlWriter.write(htmlStr)
+                htmlWriter.write(html.mkString)
                 htmlWriter.flush()
                 htmlWriter.close()
 
-                val htmlDivided = divideHtmlTree(loadXML(new ByteArrayInputStream(htmlStr.getBytes(StandardCharsets.UTF_8))), 0, 0)
+                val htmlDivided = divideHtmlTree(html, 0, 0)
                 // let's compute total html size including images and empty divs that can be added later
                 val htmlSize = htmlDivided.foldLeft[Double](0.0)((sum: Double, branch: Node) => sum + lengthOfBranch(branch) + (if (branch.length == 1) <div></div>.mkString.length else 0))
 
