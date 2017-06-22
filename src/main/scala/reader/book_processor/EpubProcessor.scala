@@ -1,14 +1,13 @@
 package reader.book_processor
 
-import java.io.{FileInputStream, OutputStreamWriter, File}
+import java.io.File
 import javax.xml.parsers.{DocumentBuilder, DocumentBuilderFactory}
-import net.liftweb.common.{Full, Box, Logger, Empty}
+import net.liftweb.common.{Box, Logger, Empty}
 import net.liftweb.json
 import net.liftweb.util._
 import Helpers._
-import java.nio.file.{StandardCopyOption, CopyOption, Files, Paths, Path}
+import java.nio.file.{StandardCopyOption, Files, Paths, Path}
 import java.nio.charset.Charset
-import org.xml.sax.SAXException
 
 import scala.xml._
 import org.zeroturnaround.zip.ZipUtil
@@ -16,12 +15,8 @@ import javax.imageio.ImageIO
 import net.liftweb.common.Full
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.JsonDSL._
-import java.net.URI
 
 import scala.xml.parsing.NoBindingFactoryAdapter
-
-//import net.liftweb.json.JsonAST._
-//import net.liftweb.json
 
 /**
  * Created by IvanchukovaEV on 26.05.14.
@@ -457,15 +452,7 @@ class EpubProcessor extends Logger{
         adapter.rootElem
     }
 
-    class EntityManager extends EntityResolver {
-        def resolveEntity(publicId: String, systemId: String ): InputSource = {
-            /* code goes here to return contents of DTD */
-            new InputSource(systemId)
-        }
-
-    }
-
-    def convertToHtml(fullPath: String, output: String, pieMaxSize: Int, tipMaxSize: Int, srcPrefix: String): Box[BookDescription] = {
+    def convertToHtml(fullPath: String, output: String, pieMaxSize: Int = 0, tipMaxSize: Int = TipMaxSize, srcPrefix: String = DefaultCssPrefix): Box[BookDescription] = {
 
         try {
             val outputPath = Paths.get(output)
@@ -617,7 +604,7 @@ class EpubProcessor extends Logger{
         } catch {
             case e: Exception =>
             info(fullPath + ": broken epub\r\n" + e.getMessage)
-            debug(e.getStackTraceString)
+            error(e.getStackTraceString)
             Empty
         }
     }

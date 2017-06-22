@@ -13,10 +13,9 @@ import java.nio.file.{Paths, Files, Path}
 import java.nio.charset.{StandardCharsets, Charset}
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.JsonDSL._
-import scala.collection.mutable
 import net.liftweb.json
 import net.liftweb.common.{Logger, Box, Full, Empty}
-import javax.imageio.{ImageReader, ImageIO}
+import javax.imageio.ImageIO
 
 import scala.xml.parsing.NoBindingFactoryAdapter
 
@@ -394,14 +393,6 @@ class Fb2Processor extends Logger{
                 }
             }
         }).flatten
-    }
-
-    class EntityManager extends EntityResolver {
-        def resolveEntity(publicId: String, systemId: String ): InputSource = {
-            /* code goes here to return contents of DTD */
-            new InputSource(systemId)
-        }
-
     }
 
 
