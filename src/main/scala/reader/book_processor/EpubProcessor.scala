@@ -200,8 +200,7 @@ class EpubProcessor extends Logger{
             //TODO: найти тип участника для переводчиков
             val fb2Translator = getMetaAttribute(description, "FB2.book-info.translator", "content")
             if (!fb2Translator.isEmpty)
-                //result.translators = List(new AuthorName(fb2Translator.split(" "):_*))
-                result.translators = List(new AuthorName(fb2Translator, "","","",""))
+                result.translators = List(new AuthorName(fb2Translator))
 
             // пытаемся найти всё остальное в fb2-свойствах
             result.publishTitle = getMetaAttribute(description, "FB2.publish-info.book-name", "content")
@@ -318,7 +317,7 @@ class EpubProcessor extends Logger{
 
                 val binary = params.binariesMap.get(imageSrc).getOrElse(new BinaryDescription())
 
-                <img mw={binary.imageAspectRatio.toString} h={binary.imageWidth.toString} src={binary.newFilename}>{tagSeq.head.child}</img> % tagSeq.head.attributes.filter {case f => f.key != "src"}
+                <img mw={binary.imageAspectRatio.toString} w={binary.imageWidth.toString} src={binary.newFilename}>{tagSeq.head.child}</img> % tagSeq.head.attributes.filter {case f => f.key != "src"}
 
             }) &
             "image" #> ((tagSeq: NodeSeq) => {
@@ -326,15 +325,17 @@ class EpubProcessor extends Logger{
                 val xlinkUri = "http://www.w3.org/1999/xlink"
                 val xlinkPrefix = tagSeq.head.scope.getPrefix(xlinkUri)
 
-                val svgSrcRel = (tagSeq.head.attribute(xlinkUri, "href").getOrElse(nse) text).replace("/", File.separator)
+                val svgSrcRel = tagSeq.head.attribute(xlinkUri, "href")
+                    .getOrElse(tagSeq.head.attribute(null, "href").getOrElse(nse))
+                    .text.replace("/", File.separator)
                 val svgSrc = params.sourceFileFolder + svgSrcRel
 
                 val fallbackImageSrcRel = (tagSeq.head \ "@src" text).replace("/", File.separator)
                 val fallbackImageSrc = params.sourceFileFolder + fallbackImageSrcRel
 
                 val binaryToTake = if (fallbackImageSrcRel.isEmpty || params.binariesMap.get(fallbackImageSrc).isEmpty)
-                    params.binariesMap.get(svgSrc).getOrElse(new BinaryDescription()) else
-                    params.binariesMap.get(fallbackImageSrc).getOrElse(new BinaryDescription())
+                    params.binariesMap.getOrElse(svgSrc, new BinaryDescription()) else
+                    params.binariesMap(fallbackImageSrc)
 
                 new Elem(tagSeq.head.prefix,
                     "img",

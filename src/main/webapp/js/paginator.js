@@ -140,18 +140,15 @@
                 $putInHere.append(node);
 
                 $("img").each(function(index) {
-                //var images = document.getElementsByTagName("img")
-                //Array.prototype.forEach.call(images, function(index) {
-                    var h = $(this).attr('h');
+                    var w = $(this).attr('w');
                     var mw = $(this).attr('mw');
                     var src = $(this).attr('src');
                     if(src.substring(0, options.srcPrefix.length) !== options.srcPrefix)
                         $(this).attr('src',  options.srcPrefix + src);
 
-                    if(h != null && mw != null) {
-                        var realWidth = Math.min($putInHere.outerWidth(), mw);
-                        var realHeight = Math.min(h * realWidth, options.height);
-                        realWidth = realHeight / h;
+                    if(w != null && mw != null) {
+                        var realWidth = Math.min($putInHere.outerWidth(), w);
+                        var realHeight = Math.min(realWidth * mw, options.height);
 
                         $(this).attr('width', realWidth);
                         $(this).attr('height', realHeight);

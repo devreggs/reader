@@ -194,8 +194,8 @@ class Fb2Processor extends Logger{
                 }) &
                 "image" #> ((imageTagSeq: NodeSeq) => {
                     val imageSrc = (imageTagSeq \ "@{http://www.w3.org/1999/xlink}href").text.tail
-                    val (href, mw, h) = params.binariesMap.getOrElse(imageSrc, (imageSrc, 0, 0))
-                    <img></img> % Attribute(null, "src", href, Null) % Attribute(null, "mw", mw.toString, Null) % Attribute(null, "h", h.toString, Null)
+                    val (href, w, mw) = params.binariesMap.getOrElse(imageSrc, (imageSrc, 0, 0))
+                    <img src={href} mw={mw.toString} w={w.toString}></img> //% Attribute(null, "src", href, Null) % Attribute(null, "mw", mw.toString, Null) % Attribute(null, "h", h.toString, Null)
                 }) &
                 "code" #> ((tagSeq: NodeSeq) => {
                     <span class={DefaultCssPrefix + "-code"}>{processBody(tagSeq.head.child, params)}</span>

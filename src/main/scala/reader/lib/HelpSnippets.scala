@@ -23,7 +23,7 @@ object HelpSnippets extends Logger {
                         case "дж" => "Дж"
                         case _ => part.head.toString.capitalize
                     }
-                } else {
+                } else if(part.size == 1){
                     part.head.toString.capitalize
                 }
             }).mkString(". ") + "."
