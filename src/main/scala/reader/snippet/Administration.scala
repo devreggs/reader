@@ -51,7 +51,20 @@ class Administration extends Logger {
                     ".book-creation-date *" #> book.obtainDate.toString() &
                     ".book-owner *" #> book.owner.foreign.openOrThrowException("empty owner").email.get &
                     ".book-state *" #> book.state.get.toString &
-                    ".book-view [href]" #> ("/view?id=" + book.id.get.toString)
+                    ".book-view [href]" #> ("/view?id=" + book.id.get.toString) &
+                    ".book-del [onclick]" #> SHtml.ajaxInvoke(() => {
+                        if(SecurityGateway.allowRemove(book)) {
+                            BookProcessor.removeBook(book)
+                            User.setCurrentSessionMessage("Книга \"" + book.title.get + "\" пользователя " + User.currentUser.email.get + " удалена")
+                            User.currentUser.books.refresh
+                            JsCmds.Reload
+                        } else
+                            JsCmds.Noop
+                    }) &
+                    ".book-reload [onclick]" #> SHtml.ajaxInvoke(() => {
+                        BookProcessor.reprocessBook(book)
+                        JsCmds.Noop
+                    })
             }) &
             ".genre-element *" #> Genre.findAll().map(genre => {
                 ".genre-source *" #> genre.sourceTitle.get &

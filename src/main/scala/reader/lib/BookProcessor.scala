@@ -23,6 +23,19 @@ import org.apache.commons.io.{FileUtils, FilenameUtils}
 import java.nio.charset.Charset
 
 object BookProcessor extends Logger {
+    def removeBook(book: Book) = {
+        info(s"delete book ${book.id.get}")
+        if(SecurityGateway.allowRemove(book)) {
+            book.delete_!
+            User.setCurrentSessionMessage("Книга \"" + book.title.get + "\" удалена")
+        }
+        User.currentUser.books.refresh
+        if (bookQueue.contains(book))
+            bookQueue.remove(book)
+        FileUtils.deleteDirectory(new File(book.directoryPath))
+        book.delete_!
+    }
+
 
     // Если перезагрузка сервера то добавить из базы все необработанные книги в очередь
     def init = Book.raw.foreach(pushBook(_))
@@ -33,21 +46,25 @@ object BookProcessor extends Logger {
         Genre.bulkDelete_!!()
 
         Book.findAll().foreach(b => {
-            if(b.state.get != BookState.raw) {
-                b.authors.clear()
-                b.genres.clear()
-                b.failedMessage("")
-                b.state(BookState.raw).saveMe()
-
-                new File(b.directoryPath).listFiles().filter(_.getName != "original").foreach(file => {
-                    if(file.isDirectory)
-                        FileUtils.deleteDirectory(file)
-                    else
-                        file.delete()
-                })
-                pushBook(b)
-            }
+            if(b.state.get != BookState.raw) reprocessBook(b)
         })
+    }
+
+    def reprocessBook(book: Book) ={
+        info(s"reprocess ${book.id.get}")
+        book.authors.clear()
+        book.genres.clear()
+        book.failedMessage("")
+        book.state(BookState.raw).saveMe()
+
+        new File(book.directoryPath).listFiles().filter(_.getName != "original").foreach(file => {
+            if(file.isDirectory)
+                FileUtils.deleteDirectory(file)
+            else
+                file.delete()
+        })
+        pushBook(book)
+
     }
 
     def removeAllWrongs = {

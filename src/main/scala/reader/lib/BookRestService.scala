@@ -84,14 +84,10 @@ object BookRestService extends RestHelper with Logger {
         case "remove" :: "book" :: AsInt(bookId) :: Nil Get req => stdResponse(req){
             val book = Book.byId(bookId).get
             if(SecurityGateway.allowRemove(book)) {
-                book.delete_!
+                BookProcessor.removeBook(book)
                 User.setCurrentSessionMessage("Книга \"" + book.title.get + "\" удалена")
+                User.currentUser.books.refresh
             }
-            User.currentUser.books.joins.find(_.book.get == book.id.get).foreach(b => {
-                b.delete_!
-                User.setCurrentSessionMessage("Книга \"" + book.title.get + "\" удалена")
-            })
-            User.currentUser.books.refresh
             RedirectResponse("/index")
         }
 
