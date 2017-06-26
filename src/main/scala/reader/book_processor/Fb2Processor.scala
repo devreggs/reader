@@ -238,7 +238,7 @@ class Fb2Processor extends Logger{
                     new xml.Elem(null, "p", if (id.isEmpty) Null else Attribute(None, "id", Text(id.head.text), Null), TopScope, true, processBody(tagSeq.head.child, params) :_*)
                 }) &
                 "a" #> ((tagSeq: NodeSeq) => {
-                    val target = tagSeq.head.attribute("http://www.w3.org/1999/xlink", "href").head.text
+                    val target = tagSeq.head.attribute("http://www.w3.org/1999/xlink", "href").headOption.getOrElse(ns).head.text
 
                     if (target.startsWith("#")) {
                         linkCounter += 1
@@ -269,19 +269,9 @@ class Fb2Processor extends Logger{
                     author \ "email" text)).toList
             result.genres = (for (genre <- description \ "title-info" \ "genre") yield genre.text).toList
 
-            def transformToFlatText(ns: NodeSeq): NodeSeq = {
-                val tr = "*" #> ((tagSeq: NodeSeq) => {
-                    val tag = tagSeq.head
-                    if (tag.child.length == 0)
-                        tag
-                    else if (List("strong", "emphasis", "style", "a", "strikethrough", "sub", "sup", "code").contains(tag.label))
-                        Text(" " + transformToFlatText(tag.child).mkString + " ")
-                    else
-                        Text(transformToFlatText(tag.child).mkString + "\r\n")
-                })
-                tr(ns)
-            }
-            result.description = transformToFlatText(description \ "title-info" \ "annotation" \ "_").mkString
+            result.description = (description \ "title-info" \ "annotation").text
+            /*import scala.reflect.runtime.universe._
+            println(Literal(Constant(result.description)).toString)*/
 
             val coverSrc =
                 if ((description \ "title-info" \ "coverpage" nonEmpty)
@@ -393,9 +383,44 @@ class Fb2Processor extends Logger{
     }
 
 
+    def loadXML(file: File): Node = {
+        val factory: DocumentBuilderFactory  = DocumentBuilderFactory.newInstance()
+        factory.setNamespaceAware(true)
+        factory.setValidating(false)
+        val documentBuilder: DocumentBuilder  = factory.newDocumentBuilder()
+        documentBuilder.setEntityResolver(new EntityManager())
+
+        val source = new DOMSource(documentBuilder.parse(file))
+        val adapter = new NoBindingFactoryAdapter
+        val saxResult = new SAXResult(adapter)
+        val transformerFactory = javax.xml.transform.TransformerFactory.newInstance()
+        val transformer = transformerFactory.newTransformer()
+        transformer.transform(source, saxResult)
+        adapter.rootElem
+    }
+
+
+    def loadXML(input: String): Node = {
+        val factory: DocumentBuilderFactory = DocumentBuilderFactory.newInstance()
+        factory.setNamespaceAware(true)
+        factory.setValidating(false)
+        val documentBuilder: DocumentBuilder = factory.newDocumentBuilder()
+        documentBuilder.setEntityResolver(new EntityManager())
+
+        val source = new DOMSource(documentBuilder.parse(new InputSource(new StringReader(input))))
+        val adapter = new NoBindingFactoryAdapter
+        val saxResult = new SAXResult(adapter)
+        val transformerFactory = javax.xml.transform.TransformerFactory.newInstance()
+        val transformer = transformerFactory.newTransformer()
+        transformer.transform(source, saxResult)
+        adapter.rootElem
+    }
+
+
+
     def convertToHtml(fullPath: String, outputFolder: String, pieMaxSize: Int, tipMaxSize: Int, srcPrefix: String, useExternalFixer: Boolean): Box[BookDescription] = {
         try {
-            val input = scala.xml.XML.loadFile(fullPath)
+            val input = loadXML(new File(fullPath))
 
             val validated = if (useExternalFixer)
                 Fb2Fix(fullPath)
@@ -416,35 +441,35 @@ class Fb2Processor extends Logger{
                 // SAVE BINARIES
                 val binariesMap =
                     (for ((binaryTag, index) <- (input \ "binary").zipWithIndex)
-                    yield {
-                        if ((binaryTag \ "@content-type").text.startsWith("image/")) {
-                            val decodedData = new BASE64Decoder().decodeBuffer(binaryTag.text)
-                            val imageStream = ImageIO.createImageInputStream(new ByteArrayInputStream(decodedData))
+                        yield {
+                            if ((binaryTag \ "@content-type").text.startsWith("image/")) {
+                                val decodedData = new BASE64Decoder().decodeBuffer(binaryTag.text)
+                                val imageStream = ImageIO.createImageInputStream(new ByteArrayInputStream(decodedData))
 
-                            val imageAttrs: (String, Int, Double) = if (imageStream == null) {
-                                info(fullPath + ": could not create ImageInputStream for " + (binaryTag \ "@id").text)
-                                ((binaryTag \ "@content-type").text.substring("image/".length), 0, 0.0)
+                                val imageAttrs: (String, Int, Double) = if (imageStream == null) {
+                                    info(fullPath + ": could not create ImageInputStream for " + (binaryTag \ "@id").text)
+                                    ((binaryTag \ "@content-type").text.substring("image/".length), 0, 0.0)
+                                }
+                                else {
+                                    val image = ImageIO.read(imageStream)
+                                    val it = ImageIO.getImageReaders(imageStream)
+                                    // trying to determine actual image format. if it fails - take mime type pointed in input fb2
+                                    (if (it.hasNext) it.next().getFormatName.toLowerCase else (binaryTag \ "@content-type").text.substring("image/".length), image.getWidth, image.getHeight * 1.0 / image.getWidth)
+                                }
+
+                                // save to filesystem
+                                val binaryFileName = outputFolder + File.separator + index.toString + "." + imageAttrs._1
+                                val binaryFile = new FileOutputStream(new File(binaryFileName))
+                                val binaryHref = srcPrefix + index.toString + "." + imageAttrs._1
+
+                                binaryFile.write(decodedData)
+                                binaryFile.flush()
+                                binaryFile.close()
+                                (binaryTag \ "@id" text, (binaryHref, imageAttrs._2, imageAttrs._3))
                             }
-                            else {
-                                val image = ImageIO.read(imageStream)
-                                val it = ImageIO.getImageReaders(imageStream)
-                                // trying to determine actual image format. if it fails - take mime type pointed in input fb2
-                                (if (it.hasNext) it.next().getFormatName.toLowerCase else (binaryTag \ "@content-type").text.substring("image/".length), image.getWidth, image.getHeight * 1.0 / image.getWidth)
-                            }
+                            else (binaryTag \ "@id" text, ("", 0 , 0.0))
 
-                            // save to filesystem
-                            val binaryFileName = outputFolder + File.separator + index.toString + "." + imageAttrs._1
-                            val binaryFile = new FileOutputStream(new File(binaryFileName))
-                            val binaryHref = srcPrefix + index.toString + "." + imageAttrs._1
-
-                            binaryFile.write(decodedData)
-                            binaryFile.flush()
-                            binaryFile.close()
-                            (binaryTag \ "@id" text, (binaryHref, imageAttrs._2, imageAttrs._3))
-                        }
-                        else (binaryTag \ "@id" text, ("", 0 , 0.0))
-
-                    }).toMap
+                        }).toMap
 
                 // CONVERT BODIES
                 linkCounter = 0
@@ -454,14 +479,15 @@ class Fb2Processor extends Logger{
 
                 // need to trim input xml otherwise every linebreak is loaded as a separate tag labeled "#PCDATA"
                 // with empty but non-zero length text which leads to output size counting errors
-                val html = xml.XML.loadString(processBody(xml.Utility.trim(input) \ "body", new procParams(binariesMap, 1, 0, null))
-                    .mkString.replace("  ", " ").replace(" .", ".").replace(" ,", ","))
+                val html = processBody((xml.Utility.trim(input) \ "body"), new procParams(binariesMap, 1, 0, null))
+                val htmlNs = new xml.Elem(null, "div", html.head.attributes, input.scope, true, html.head.child :_*)
+                val htmlStr = htmlNs.mkString.replace("  ", " ").replace(" .", ".").replace(" ,", ",").trim().replaceFirst("^([\\W]+)<","<")
                 val htmlWriter = Files.newBufferedWriter(Paths.get(outputFolder + File.separator + "whole.html"), Charset.forName("UTF-8"))
-                htmlWriter.write(html.mkString)
+                htmlWriter.write(htmlStr)
                 htmlWriter.flush()
                 htmlWriter.close()
 
-                val htmlDivided = divideHtmlTree(html, 0, 0)
+                val htmlDivided = divideHtmlTree(loadXML(htmlStr), 0, 0)
                 // let's compute total html size including images and empty divs that can be added later
                 val htmlSize = htmlDivided.foldLeft[Double](0.0)((sum: Double, branch: Node) => sum + lengthOfBranch(branch) + (if (branch.length == 1) <div></div>.mkString.length else 0))
 
@@ -478,30 +504,30 @@ class Fb2Processor extends Logger{
                 val description = JObject( List(
                     JField("pages", JArray(
                         (for (tag <- htmlDivided)
-                        yield {
-                            pie = tag
-                            // add empty div if pie consists of the only root tag
-                            if (pie.length == 1)
-                                pie = pie ++ Text("\r\n") ++ <div></div>
+                            yield {
+                                pie = tag
+                                // add empty div if pie consists of the only root tag
+                                if (pie.length == 1)
+                                    pie = pie ++ Text("\r\n") ++ <div></div>
 
-                            val pieWriter = Files.newBufferedWriter(Paths.get(outputFolder + File.separator + pieCounter.toString + ".pie"), Charset.forName("UTF-8"))
-                            pieWriter.write(pie.mkString)
-                            pieWriter.flush()
-                            pieWriter.close()
+                                val pieWriter = Files.newBufferedWriter(Paths.get(outputFolder + File.separator + pieCounter.toString + ".pie"), Charset.forName("UTF-8"))
+                                pieWriter.write(pie.mkString)
+                                pieWriter.flush()
+                                pieWriter.close()
 
-                            pieSize = lengthOfBranch(pie)
-                            pieMax += pieSize
+                                pieSize = lengthOfBranch(pie)
+                                pieMax += pieSize
 
-                            val yieldResult = ("number" -> pieCounter) ~
-                                ("pie" -> pieSize / htmlSize) ~
-                                ("pieMin" -> (pieMax - pieSize) / htmlSize) ~
-                                ("pieMax" -> pieMax / htmlSize) ~
-                                ("ids" -> (for (nestedTag <- pie \\ "_" if (nestedTag\"@id" nonEmpty)) yield nestedTag\"@id" text))
+                                val yieldResult = ("number" -> pieCounter) ~
+                                    ("pie" -> pieSize / htmlSize) ~
+                                    ("pieMin" -> (pieMax - pieSize) / htmlSize) ~
+                                    ("pieMax" -> pieMax / htmlSize) ~
+                                    ("ids" -> (for (nestedTag <- pie \\ "_" if (nestedTag\"@id" nonEmpty)) yield nestedTag\"@id" text))
 
-                            pie = NodeSeq.Empty
-                            pieCounter += 1
-                            yieldResult
-                        }).toList
+                                pie = NodeSeq.Empty
+                                pieCounter += 1
+                                yieldResult
+                            }).toList
                     )),
                     JField("tips", JArray(tips.toList))
                 ))
@@ -519,7 +545,7 @@ class Fb2Processor extends Logger{
         } catch {
             case e: Exception =>
                 error(e.getMessage)
-                debug(e.getStackTraceString)
+                error(e.getStackTraceString)
                 Empty
         }
     }

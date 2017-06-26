@@ -1,20 +1,25 @@
 package reader.book_processor
 
-import java.io.File
+import java.io.{File, StringReader}
 import javax.xml.parsers.{DocumentBuilder, DocumentBuilderFactory}
-import net.liftweb.common.{Box, Logger, Empty}
+
+import net.liftweb.common.{Box, Empty, Logger}
 import net.liftweb.json
 import net.liftweb.util._
 import Helpers._
-import java.nio.file.{StandardCopyOption, Files, Paths, Path}
+import java.nio.file.{Files, Path, Paths, StandardCopyOption}
 import java.nio.charset.Charset
 
 import scala.xml._
 import org.zeroturnaround.zip.ZipUtil
 import javax.imageio.ImageIO
+import javax.xml.transform.dom.DOMSource
+import javax.xml.transform.sax.SAXResult
+
 import net.liftweb.common.Full
 import net.liftweb.json.JsonAST._
 import net.liftweb.json.JsonDSL._
+import org.apache.commons.text.StringEscapeUtils
 
 import scala.xml.parsing.NoBindingFactoryAdapter
 
@@ -76,7 +81,7 @@ class EpubProcessor extends Logger{
             new File(metainfFolder).listFiles().find { case directoryEntry => {
                 if (!directoryEntry.isDirectory)
                     try {
-                        (loadXML(directoryEntry.toString) \ "rootfiles" \ "rootfile" \ "@media-type" text) == "application/oebps-package+xml"
+                        (loadXML(new File(directoryEntry.toString)) \ "rootfiles" \ "rootfile" \ "@media-type" text) == "application/oebps-package+xml"
                     } catch { 
                         case _: Throwable => false
                     }
@@ -166,10 +171,26 @@ class EpubProcessor extends Logger{
             // сортируем всех авторов в списке по значению display-seq (либо в порядке появления)
             result.authors = aut.sortWith(comparePairsByKey).map( _._2 ).toList
 
-            result.description = try {
-                XML.loadString((description \ "description").text.replace("<br>", System.getProperty("line.separator"))).text
-            } catch {
-                case _: Throwable => (description \ "description").text
+            if (description \ "description" nonEmpty) {
+                val unescapedDescription = StringEscapeUtils.unescapeXml(
+                    new Elem(null,
+                        "description",
+                        (description \ "description").head.attributes,
+                        (epubOPF \ "metadata").head.scope,
+                        false,
+                        (description \ "description").head.child: _*
+                    ).toString
+                ).replace("<br>", System.getProperty("line.separator"))
+
+                result.description =
+                    if (unescapedDescription == (description \ "description").text)
+                        (description \ "description").text
+                    else
+                        try {
+                            loadXML("<?xml version='1.0' encoding='utf-8'?>" + unescapedDescription).text
+                        } catch {
+                            case _: Exception => (description \ "description").text
+                        }
             }
             result.date = (description \ "date").text
             result.publisher = (description \ "publisher").text
@@ -229,19 +250,19 @@ class EpubProcessor extends Logger{
         }}.flatten
     }
 
-    def getSupportedMediaTypes = List("application/xhtml+xml", "application/x-dtbook+xml", "text/x-oeb1-document")
+    val supportedMediaTypes = List("application/xhtml+xml", "application/x-dtbook+xml", "text/x-oeb1-document")
 
     // разворачиваем fallback-и для элементов секции spine в OPF
     def unchainSpineItem(manifest: NodeSeq, itemId: String, chain: List[String]): NodeSeq = {
         if (chain.contains(itemId))
             throw new Exception(s"recursive manifest fallback detected (id chain: ${chain.mkString(" ")})")
-        
+
         val manifestItem = (manifest \ "item").find((p: Node) => {(p \ "@id").text == itemId})
         if (manifestItem.isEmpty)
             throw new Exception(s"manifest reference to non-existent id (${itemId})")
 
         val mediaType = (manifestItem.get \ "@media-type").text
-        if (getSupportedMediaTypes.contains(mediaType) && (manifestItem.get \ "@fallback").isEmpty && (manifestItem.get \ "@fallback-style").isEmpty )
+        if (supportedMediaTypes.contains(mediaType) && (manifestItem.get \ "@fallback").isEmpty && (manifestItem.get \ "@fallback-style").isEmpty )
             manifestItem.get
         else {
             // TODO: support of different media types
@@ -428,20 +449,34 @@ class EpubProcessor extends Logger{
         directory.delete()
     }
 
-    def loadXML(input: String): NodeSeq = {
+
+    def loadXML(file: File): Node = {
         val factory: DocumentBuilderFactory  = DocumentBuilderFactory.newInstance()
         factory.setNamespaceAware(true)
         factory.setValidating(false)
         val documentBuilder: DocumentBuilder  = factory.newDocumentBuilder()
         documentBuilder.setEntityResolver(new EntityManager())
 
-
-
-        val dom2sax = new com.sun.org.apache.xalan.internal.xsltc.trax.DOM2SAX(documentBuilder.parse(new File(input)))
+        val dom2sax = new com.sun.org.apache.xalan.internal.xsltc.trax.DOM2SAX(documentBuilder.parse(file))
         val adapter = new NoBindingFactoryAdapter
         dom2sax.setContentHandler(adapter)
         dom2sax.parse()
 
+        adapter.rootElem
+    }
+
+
+    def loadXML(input: String): Node = {
+        val factory: DocumentBuilderFactory = DocumentBuilderFactory.newInstance()
+        factory.setNamespaceAware(true)
+        factory.setValidating(false)
+        val documentBuilder: DocumentBuilder = factory.newDocumentBuilder()
+        documentBuilder.setEntityResolver(new EntityManager())
+
+        val dom2sax = new com.sun.org.apache.xalan.internal.xsltc.trax.DOM2SAX(documentBuilder.parse(new InputSource(new StringReader(input))))
+        val adapter = new NoBindingFactoryAdapter
+        dom2sax.setContentHandler(adapter)
+        dom2sax.parse()
         adapter.rootElem
     }
 
@@ -474,15 +509,15 @@ class EpubProcessor extends Logger{
 
             val containerFilename = getMainContainerFilename(unzippedFolder)
             if (!containerFilename.isEmpty) {
-                val container = scala.xml.XML.loadFile(containerFilename)
+                val container = loadXML(new File(containerFilename))
                 val opfRelPath = (container \\ "rootfile"  \ "@full-path" text)
-                val OPF = scala.xml.XML.loadFile(unzippedFolder + File.separator + opfRelPath)
+                val OPF = loadXML(new File(unzippedFolder + File.separator + opfRelPath))
                 val opfFolderPath = Paths.get(unzippedFolder + File.separator + opfRelPath).getParent
                 val opfFolderUri = opfFolderPath.toUri
 
                 // Перемещаем файлики в корень
-                val binariesMap = (for ((binaryTag, index) <- (OPF \ "manifest" \ "item").zipWithIndex if (!getSupportedMediaTypes.contains(binaryTag \ "@media-type" text))) yield {
-                    val sourceHref = (binaryTag \ "@href" text)
+                val binariesMap = (for ((binaryTag, index) <- (OPF \ "manifest" \ "item").zipWithIndex if (!supportedMediaTypes.contains(binaryTag \ "@media-type" text))) yield {
+                    val sourceHref = (binaryTag \ "@href").headOption.getOrElse(nse).text
                     val mediaType = (binaryTag \ "@media-type" text)
                     val sourceFilename = outputFolder + outputFolderUri.relativize(new File(opfFolderPath + File.separator + sourceHref).toURI).toString.replace("/", File.separator)
 
@@ -527,7 +562,7 @@ class EpubProcessor extends Logger{
                         // якоря и id, поэтому приводим его относительно выходного каталога (как в anchorsMap)
                         val pieFilename = outputFolderUri.relativize(Paths.get(pieRelFilename).toUri).toString.replace("/", File.separator)
 
-                        (replaceIdsAndAnchors(loadXML(pieRelFilename), pieFilename), pieFilename, pieIndex)
+                        (replaceIdsAndAnchors(loadXML(new File(pieRelFilename)), pieFilename), pieFilename, pieIndex)
                     }
                         // теперь, когда известна карта ссылок с изменёнными путями, итерируем по паям ещё раз,
                         // чтобы распарсить каждый из них
@@ -582,7 +617,7 @@ class EpubProcessor extends Logger{
                 val ncxFilename = opfFolderPath + File.separator + ((OPF \ "manifest" \ "item").find((p: Node) => {ncxMetaId == (p \"@id" text)}).getOrElse(nse) \ "@href").text
 
                 // прогружаем таблицу содержания
-                val NCX = loadXML(ncxFilename)
+                val NCX = loadXML(new File(ncxFilename))
                 // преобразуем её в html-страничку
                 val toc = tocFromNcx(NCX \ "navMap" \ "_", 1, outputFolderUri.relativize(Paths.get(ncxFilename).toUri).toString.replace("/", File.separator))
 

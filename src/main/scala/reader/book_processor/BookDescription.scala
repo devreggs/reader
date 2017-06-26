@@ -32,7 +32,7 @@ class BookDescription (var title: String = "",
             s"Genres (${genres.length}): ${this.genres.mkString(", ")}\r\n" +
             s"Description: $description\r\n" +
             s"Coverpage: $coverpage\r\n" +
-            s"Sequence: ${this.sequence.map( (s: Sequence) => s.mkString).mkString(", ")}\r\n" +
+            s"Sequence (${sequence.length}): ${this.sequence.map( (s: Sequence) => s.mkString).mkString(", ")}\r\n" +
             s"Original language: $originalLanguage\r\n" +
             s"Translators (${translators.length}): ${this.translators.map((t: AuthorName) => t.mkString).mkString("; ")}\r\n" +
             s"Publisher: $publisher\r\n" +
@@ -72,7 +72,7 @@ class BookDescription (var title: String = "",
     }
 }
 
-class AuthorName (val firstName: String,
+class AuthorName (val firstName: String = "",
                      val middleName: String = "",
                      val lastName: String = "",
                      val nickname: String = "",
@@ -99,5 +99,14 @@ class Sequence (val name: String,
                    val number: String) {
     def mkString = {
         s"$name - $number"
+    }
+
+    override def equals(other: Any) = {
+        if (other.getClass != this.getClass)
+            false
+        else {
+            val o = other.asInstanceOf[this.type]
+            name == o.name && number == o.number
+        }
     }
 }

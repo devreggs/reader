@@ -1,6 +1,6 @@
 package reader.book_processor
 
-import java.io.FileInputStream
+import java.io.{File, FileInputStream}
 
 import scala.xml.{EntityResolver, InputSource}
 
@@ -8,7 +8,7 @@ import scala.xml.{EntityResolver, InputSource}
   * Created by bw-ok on 22.06.2017.
   */
 class EntityManager extends EntityResolver {
-    val recourcesDir = "src/main/resources/xhtml11/"
+    val recourcesDir = getClass.getResource("/xhtml11").getPath.toString + File.separator
     def resolveEntity(publicId: String, systemId: String ): InputSource = {
         /* code goes here to return contents of DTD */
         if (publicId == "-//W3C//DTD XHTML 1.1//EN")

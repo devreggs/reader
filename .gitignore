@@ -4,3 +4,5 @@ target
 /console.devmode.log
 webapps
 /reader.log
+books
+src/test
